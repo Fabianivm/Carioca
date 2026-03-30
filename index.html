@@ -1,0 +1,388 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<meta name="theme-color" content="#0d0d0d">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Carioca">
+<title>Carioca · Marcador</title>
+<link rel="manifest" href="manifest.json">
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700;900&family=DM+Mono:wght@400;500&family=DM+Sans:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg:#0d0d0d;--surface:#181818;--card:#1f1f1f;--border:#2e2e2e;
+    --accent:#e8c84a;--accent2:#c4472a;--text:#f0ede6;--muted:#7a7570;
+    --green:#4caf6e;--radius:12px;
+  }
+  *{box-sizing:border-box;margin:0;padding:0;}
+  body{background:var(--bg);color:var(--text);font-family:'DM Sans',sans-serif;min-height:100vh;padding:0 0 60px;}
+
+  header{background:var(--surface);border-bottom:1px solid var(--border);padding:18px 20px;display:flex;align-items:center;gap:12px;position:sticky;top:0;z-index:100;}
+  .logo{font-family:'Playfair Display',serif;font-size:26px;font-weight:900;color:var(--accent);letter-spacing:-1px;}
+  .logo span{color:var(--accent2);}
+  .logo-sub{font-family:'DM Mono',monospace;font-size:9px;color:var(--muted);text-transform:uppercase;letter-spacing:2px;margin-top:2px;}
+  #hdr-round{margin-left:auto;background:var(--accent);color:#0d0d0d;font-family:'DM Mono',monospace;font-size:11px;font-weight:600;padding:4px 10px;border-radius:20px;display:none;}
+
+  main{max-width:540px;margin:0 auto;padding:20px 14px;}
+
+  /* ── pantallas ── */
+  .screen{display:none;}
+  .screen.on{display:block;}
+
+  /* ── botones ── */
+  .btn{display:inline-flex;align-items:center;justify-content:center;gap:7px;padding:11px 18px;border-radius:8px;border:none;cursor:pointer;font-family:'DM Sans',sans-serif;font-size:14px;font-weight:500;transition:all .18s;width:auto;}
+  .btn-ghost{background:var(--card);border:1px solid var(--border);color:var(--text);}
+  .btn-ghost:hover{border-color:var(--accent);color:var(--accent);}
+  .btn-primary{background:var(--accent);color:#0d0d0d;font-weight:700;font-size:15px;padding:13px;width:100%;margin-top:8px;}
+  .btn-primary:hover{background:#f0d567;}
+  .btn-danger{background:var(--accent2);color:#fff;font-weight:700;width:100%;margin-top:8px;padding:13px;}
+  .btn-danger:hover{background:#d4573a;}
+
+  /* ── setup ── */
+  .setup-hero{text-align:center;padding:32px 0 24px;}
+  .setup-hero .icon{font-size:50px;margin-bottom:12px;}
+  .setup-hero h1{font-family:'Playfair Display',serif;font-size:24px;font-weight:900;color:var(--accent);margin-bottom:6px;}
+  .setup-hero p{color:var(--muted);font-size:13px;}
+  .info-box{background:var(--card);border:1px solid var(--border);border-radius:8px;padding:12px 14px;font-size:13px;color:var(--muted);line-height:1.6;margin-bottom:18px;}
+  .info-box strong{color:var(--text);}
+  .sec-title{font-family:'Playfair Display',serif;font-size:18px;font-weight:700;margin-bottom:14px;}
+  .sec-title small{font-family:'DM Sans',sans-serif;font-size:11px;font-weight:400;color:var(--muted);margin-left:6px;}
+  #player-list{display:flex;flex-direction:column;gap:9px;margin-bottom:16px;}
+  .p-row{display:flex;align-items:center;gap:8px;animation:fi .2s ease;}
+  @keyframes fi{from{opacity:0;transform:translateY(-4px)}to{opacity:1;transform:translateY(0)}}
+  .p-num{font-family:'DM Mono',monospace;font-size:11px;color:var(--muted);min-width:18px;}
+  .p-input{flex:1;background:var(--card);border:1px solid var(--border);border-radius:8px;padding:10px 13px;color:var(--text);font-size:15px;outline:none;transition:border-color .2s;}
+  .p-input:focus{border-color:var(--accent);}
+  .p-input::placeholder{color:var(--muted);}
+  .p-del{background:none;border:none;color:var(--muted);font-size:17px;cursor:pointer;padding:4px 7px;border-radius:5px;}
+  .p-del:hover{color:var(--accent2);background:#2a1a18;}
+  hr.div{border:none;border-top:1px solid var(--border);margin:20px 0;}
+
+  /* ── game ── */
+  #rounds-nav{display:flex;gap:7px;flex-wrap:wrap;margin-bottom:20px;padding-bottom:14px;border-bottom:1px solid var(--border);}
+  .rchip{font-family:'DM Mono',monospace;font-size:11px;padding:5px 9px;border-radius:6px;background:var(--card);border:1px solid var(--border);color:var(--muted);cursor:pointer;transition:all .18s;}
+  .rchip:hover{border-color:var(--accent);color:var(--accent);}
+  .rchip.cur{background:var(--accent);color:#0d0d0d;border-color:var(--accent);font-weight:600;}
+  .rchip.done{border-color:var(--green);color:var(--green);}
+  .round-title{font-family:'Playfair Display',serif;font-size:22px;font-weight:700;margin-bottom:2px;}
+  #cards{display:flex;flex-direction:column;gap:9px;margin:16px 0 20px;}
+  .scard{background:var(--card);border:1px solid var(--border);border-radius:var(--radius);padding:13px 15px;display:flex;align-items:center;gap:11px;transition:border-color .2s;}
+  .scard:focus-within{border-color:var(--accent);}
+  .avatar{width:35px;height:35px;border-radius:50%;background:var(--bg);border:2px solid var(--border);display:flex;align-items:center;justify-content:center;font-family:'Playfair Display',serif;font-size:14px;font-weight:700;color:var(--accent);flex-shrink:0;}
+  .pinfo{flex:1;}
+  .pname{font-size:14px;font-weight:500;}
+  .ptot{font-family:'DM Mono',monospace;font-size:11px;color:var(--muted);margin-top:1px;}
+  .sinput{width:86px;background:var(--bg);border:1px solid var(--border);border-radius:7px;padding:9px 10px;color:var(--text);font-family:'DM Mono',monospace;font-size:18px;text-align:center;outline:none;transition:border-color .2s;-moz-appearance:textfield;}
+  .sinput::-webkit-inner-spin-button,.sinput::-webkit-outer-spin-button{-webkit-appearance:none;}
+  .sinput:focus{border-color:var(--accent);}
+  .act-row{display:flex;gap:9px;}
+  .act-row .btn{flex:1;}
+  #lb{margin-top:28px;border-top:1px solid var(--border);padding-top:20px;}
+  .lb-hd{font-family:'Playfair Display',serif;font-size:19px;font-weight:700;margin-bottom:14px;display:flex;align-items:center;gap:8px;}
+  .lb-badge{font-family:'DM Mono',monospace;font-size:9px;background:var(--accent2);color:#fff;padding:2px 7px;border-radius:4px;letter-spacing:1px;}
+  .lbrow{display:flex;align-items:center;gap:11px;padding:11px 13px;border-radius:9px;margin-bottom:7px;background:var(--card);border:1px solid var(--border);}
+  .lbrow.r1{border-color:var(--accent);background:#211f10;}
+  .lbrow.r2{border-color:#9b9b9b;}
+  .lbrow.r3{border-color:#8b6237;}
+  .lbpos{font-family:'DM Mono',monospace;font-size:12px;min-width:24px;text-align:center;}
+  .lbrow.r1 .lbpos{color:var(--accent);font-size:15px;}
+  .lbname{flex:1;font-size:14px;font-weight:500;}
+  .lbscore{font-family:'DM Mono',monospace;font-size:19px;}
+  .lbrow.r1 .lbscore{color:var(--accent);font-size:22px;}
+
+  /* ── modal ── */
+  #modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.75);z-index:500;display:none;align-items:center;justify-content:center;padding:20px;}
+  #modal-overlay.on{display:flex;}
+  #modal{background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:28px 24px;max-width:340px;width:100%;text-align:center;}
+  #modal h2{font-family:'Playfair Display',serif;font-size:20px;font-weight:700;margin-bottom:10px;}
+  #modal p{color:var(--muted);font-size:13px;line-height:1.6;margin-bottom:22px;}
+  .modal-btns{display:flex;gap:10px;}
+  .modal-btns .btn{flex:1;margin-top:0;font-size:14px;padding:11px;}
+</style>
+</head>
+<body>
+
+<header>
+  <div>
+    <div class="logo">CARIO<span>CA</span></div>
+    <div class="logo-sub">Marcador de partida</div>
+  </div>
+  <div id="hdr-round"></div>
+</header>
+
+<main>
+
+  <!-- SETUP -->
+  <div id="setup-screen" class="screen">
+    <div class="setup-hero">
+      <div class="icon">🃏</div>
+      <h1>¡Nueva partida!</h1>
+      <p>Ingresa los nombres de los jugadores para comenzar</p>
+    </div>
+    <div class="info-box"><strong>Carioca</strong> · 9 rondas. El puntaje más bajo al final gana.</div>
+    <p class="sec-title">Jugadores <small>(2 a 8)</small></p>
+    <div id="player-list"></div>
+    <button class="btn btn-ghost" id="btn-add" onclick="pAdd()" style="width:100%;margin-bottom:4px;">＋ Agregar jugador</button>
+    <hr class="div">
+    <button class="btn btn-primary" onclick="startGame()">Comenzar partida →</button>
+  </div>
+
+  <!-- GAME -->
+  <div id="game-screen" class="screen">
+    <div id="rounds-nav"></div>
+    <div class="round-title" id="round-lbl">Ronda 1</div>
+    <div id="cards"></div>
+    <div class="act-row">
+      <button class="btn btn-ghost" id="btn-prev" onclick="nav(-1)">← Anterior</button>
+      <button class="btn btn-primary" id="btn-next" onclick="nav(1)" style="margin-top:0">Guardar y seguir →</button>
+    </div>
+    <div id="lb">
+      <div class="lb-hd">Marcador <span class="lb-badge">EN VIVO</span></div>
+      <div id="lb-rows"></div>
+    </div>
+    <button class="btn btn-danger" id="btn-reset" onclick="openModal()">🔄 Nueva partida</button>
+  </div>
+
+</main>
+
+<!-- MODAL de confirmación -->
+<div id="modal-overlay">
+  <div id="modal">
+    <h2>¿Nueva partida?</h2>
+    <p>Se perderán los puntajes de la partida actual. ¿Estás seguro?</p>
+    <div class="modal-btns">
+      <button class="btn btn-ghost" onclick="closeModal()">Cancelar</button>
+      <button class="btn btn-danger" onclick="doReset()" style="margin-top:0">Sí, reiniciar</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// ───── Estado ─────────────────────────────────────────
+const SKEY = 'carioca_v4';
+let players = [];   // [{name, scores:[9]}]
+let round   = 0;
+let active  = false;
+
+function save() {
+  try { localStorage.setItem(SKEY, JSON.stringify({players,round,active})); } catch(e){}
+}
+function load() {
+  try {
+    const r = localStorage.getItem(SKEY);
+    if (!r) return false;
+    const s = JSON.parse(r);
+    players = s.players || [];
+    round   = s.round   || 0;
+    active  = !!s.active;
+    return true;
+  } catch(e){ return false; }
+}
+
+// ───── Modal ──────────────────────────────────────────
+function openModal()  { document.getElementById('modal-overlay').classList.add('on'); }
+function closeModal() { document.getElementById('modal-overlay').classList.remove('on'); }
+
+// ───── Pantallas ──────────────────────────────────────
+function showSetup() {
+  document.getElementById('setup-screen').className  = 'screen on';
+  document.getElementById('game-screen').className   = 'screen';
+  document.getElementById('hdr-round').style.display = 'none';
+}
+function showGame() {
+  document.getElementById('setup-screen').className  = 'screen';
+  document.getElementById('game-screen').className   = 'screen on';
+  document.getElementById('hdr-round').style.display = 'block';
+  renderGame();
+}
+
+// ───── Setup ──────────────────────────────────────────
+function pAdd() {
+  if (players.length >= 8) return;
+  players.push({name:'', scores:Array(9).fill(null)});
+  renderSetup();
+}
+function pDel(i) {
+  players.splice(i,1);
+  renderSetup();
+}
+function renderSetup() {
+  const list = document.getElementById('player-list');
+  list.innerHTML = '';
+  players.forEach((p,i) => {
+    const d = document.createElement('div');
+    d.className = 'p-row';
+    d.innerHTML = `
+      <span class="p-num">${i+1}.</span>
+      <input class="p-input" type="text" placeholder="Jugador ${i+1}"
+        value="${p.name}" maxlength="20" data-i="${i}"
+        oninput="players[+this.dataset.i].name=this.value">
+      <button class="p-del" data-i="${i}" onclick="pDel(+this.dataset.i)">✕</button>`;
+    list.appendChild(d);
+  });
+  document.getElementById('btn-add').style.display = players.length >= 8 ? 'none' : 'flex';
+}
+
+function startGame() {
+  // Leer valores actuales de los inputs
+  document.querySelectorAll('#player-list .p-input').forEach((el,i) => {
+    if (players[i]) players[i].name = el.value.trim();
+  });
+  players = players.filter(p => p.name !== '');
+  if (players.length < 2) { alert('Ingresa al menos 2 jugadores.'); return; }
+  players.forEach(p => { p.scores = Array(9).fill(null); });
+  round  = 0;
+  active = true;
+  save();
+  showGame();
+}
+
+// ───── Game ───────────────────────────────────────────
+function renderGame() {
+  document.getElementById('hdr-round').textContent = `Ronda ${round+1} / 9`;
+  renderNav();
+  renderCards();
+  renderLB();
+}
+
+function renderNav() {
+  const nav = document.getElementById('rounds-nav');
+  nav.innerHTML = '';
+  for (let i=0;i<9;i++) {
+    const done = players.length>0 && players.every(p=>p.scores[i]!==null);
+    const btn  = document.createElement('button');
+    btn.className = 'rchip'+(i===round?' cur':'')+(done?' done':'');
+    btn.textContent = `R${i+1}`;
+    btn.setAttribute('data-r',i);
+    btn.onclick = function(){
+      round = +this.getAttribute('data-r');
+      save(); renderGame();
+    };
+    nav.appendChild(btn);
+  }
+}
+
+function renderCards() {
+  document.getElementById('round-lbl').textContent = `Ronda ${round+1}`;
+  const cont = document.getElementById('cards');
+  cont.innerHTML = '';
+
+  players.forEach((p,i) => {
+    const tot  = p.scores.reduce((a,v)=>a+(v||0),0);
+    const val  = p.scores[round];
+    const card = document.createElement('div');
+    card.className = 'scard';
+    card.innerHTML = `
+      <div class="avatar">${p.name.charAt(0).toUpperCase()}</div>
+      <div class="pinfo">
+        <div class="pname">${p.name}</div>
+        <div class="ptot" id="pt${i}">Total: ${tot} pts</div>
+      </div>
+      <input class="sinput" type="number" min="0" placeholder="0"
+        value="${val!==null?val:''}" data-pi="${i}">`;
+    cont.appendChild(card);
+  });
+
+  // Eventos de score (sin oninline para evitar problemas de scope)
+  cont.querySelectorAll('.sinput').forEach(inp => {
+    inp.addEventListener('input', function(){
+      const i = +this.getAttribute('data-pi');
+      const v = this.value==='' ? null : parseInt(this.value,10);
+      players[i].scores[round] = (v===null||isNaN(v)) ? null : v;
+      const tot = players[i].scores.reduce((a,x)=>a+(x||0),0);
+      const el  = document.getElementById('pt'+i);
+      if (el) el.textContent = `Total: ${tot} pts`;
+      save();
+      renderLB();
+    });
+  });
+
+  // Agregar jugador durante partida
+  if (players.length < 8) {
+    const ab = document.createElement('button');
+    ab.className = 'btn btn-ghost';
+    ab.style.cssText = 'width:100%;font-size:13px;margin-top:2px;';
+    ab.textContent = '＋ Agregar jugador';
+    ab.onclick = gameAddPlayer;
+    cont.appendChild(ab);
+  }
+
+  document.getElementById('btn-prev').disabled = round===0;
+  document.getElementById('btn-next').textContent = round===8 ? '✓ Finalizar' : 'Guardar y seguir →';
+}
+
+function nav(dir) {
+  const next = round + dir;
+  if (next<0) return;
+  if (next>8) {
+    save();
+    document.getElementById('lb').scrollIntoView({behavior:'smooth'});
+    return;
+  }
+  round = next;
+  save();
+  renderGame();
+  window.scrollTo({top:0,behavior:'smooth'});
+}
+
+function gameAddPlayer() {
+  const name = prompt('Nombre del nuevo jugador:');
+  if (!name||!name.trim()) return;
+  if (players.length>=8) return;
+  players.push({name:name.trim(), scores:Array(9).fill(null)});
+  save(); renderGame();
+}
+
+function renderLB() {
+  const sorted = players
+    .map(p=>({name:p.name, total:p.scores.reduce((a,v)=>a+(v||0),0)}))
+    .sort((a,b)=>a.total-b.total);
+  const medals=['🥇','🥈','🥉'];
+  const cont = document.getElementById('lb-rows');
+  cont.innerHTML='';
+  sorted.forEach((p,rank)=>{
+    const row=document.createElement('div');
+    row.className='lbrow'+(rank===0?' r1':rank===1?' r2':rank===2?' r3':'');
+    row.innerHTML=`
+      <div class="lbpos">${rank<3?medals[rank]:rank+1}</div>
+      <div class="lbname">${p.name}</div>
+      <div class="lbscore">${p.total}</div>`;
+    cont.appendChild(row);
+  });
+}
+
+// ───── Reset ──────────────────────────────────────────
+function doReset() {
+  closeModal();
+  try { localStorage.removeItem(SKEY); } catch(e){}
+  players = [];
+  round   = 0;
+  active  = false;
+  players.push({name:'', scores:Array(9).fill(null)});
+  players.push({name:'', scores:Array(9).fill(null)});
+  showSetup();
+  renderSetup();
+  window.scrollTo({top:0,behavior:'smooth'});
+}
+
+// ───── Init ───────────────────────────────────────────
+if (load() && active && players.length>=2) {
+  showGame();
+} else {
+  players = [];
+  players.push({name:'', scores:Array(9).fill(null)});
+  players.push({name:'', scores:Array(9).fill(null)});
+  showSetup();
+  renderSetup();
+}
+</script>
+<script>
+  if ('serviceWorker' in navigator) {
+    navigator.serviceWorker.register('sw.js');
+  }
+</script>
+</body>
+</html>
